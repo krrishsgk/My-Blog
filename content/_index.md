@@ -1,2 +1,2 @@
-## Front Page Content
-`beautifulhugo` supports content on your front page. Edit `/content/_index.md` to change what appears here. Delete `/content/_index.md` if you don't want any content here.
+## Hello, and welcome!
+This site is still under construction. So if you have been invited to visit, you must be very special. The posts here right now are just a sign of what I want to build on. Stay tuned!

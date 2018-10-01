@@ -42,7 +42,7 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [Author]
   name = "Gopalakrishnan Shanker Rajhan"
-  website = "page/about"
+  website = ""
   email = "gopalakrishnan.shanker@gmail.com"
   facebook = "krish.sgk"
   github = "krrishsgk"
