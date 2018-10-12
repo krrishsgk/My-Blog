@@ -45,7 +45,7 @@ The negative consequences of drug abuse affect not only individuals who abuse dr
 All these facts clearly indicate that the burden in terms of costs, trauma, and influence on the nation's youth is substantial. Moreover, the effects are pervasive and carry huge costs to society as a whole. The efforts to fight drug abuse, the "War on Drugs", has been declared a failure due to its inability to understand the core reasons behind the use and spread of drugs. Drug use is not something that happens on its own in isolation. In order to start addressing this problem from the ground up, we want to look at the relationship between an individual's personality traits and the drugs he uses. We extend this to find a way to predict if a person can be a potential drug user. 
 
 ```{r psych-pic, out.width = "500px", fig.cap = "Are certain types of people more prone to drug use?", fig.pos = "htb!"}
-knitr::include_graphics("psychology.jpg")
+knitr::include_graphics("/img/psychology.jpg")
 #Insert relevent image here
 ```
 
