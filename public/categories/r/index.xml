@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</managingEditor>
     <webMaster>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</webMaster>
-    <lastBuildDate>Thu, 23 Jul 2015 21:13:14 -0500</lastBuildDate>
+    <lastBuildDate>Fri, 12 Oct 2018 21:13:14 -0500</lastBuildDate>
     
 	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Understanding the relationship between drugs and the psyche</title>
+      <link>/post/drugs_and_psyche/</link>
+      <pubDate>Fri, 12 Oct 2018 21:13:14 -0500</pubDate>
+      <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
+      <guid>/post/drugs_and_psyche/</guid>
+      <description>This article is a slight edit from a project paper I had done as a part of the coursework for STAT430 - Applied Machine Learning
+IntroductionThe problem of drug abuse is a pressing concern. It has numerous factors associated with it that include environmental, social, psychological and economic. There has been plenty of coverage towards the social and economic factors. Here, we consider the psychological. Namely, the relationship between personality traits and proclivity to gravitate towards certain types of drugs to evaluate the risk of an individual being a drug consumer.</description>
+    </item>
     
     <item>
       <title>Hello R Markdown</title>
