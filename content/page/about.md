@@ -8,9 +8,6 @@ My name is Gopalakrishnan Shanker Rajhan. If that's too complex for you (and it 
 
 What else do you need?
 
-### My History
-
-I grew up in the beautiful coastal city of Chennai, in India. I studied Mechanical Engineering for my undergraduate degree and followed that up with a Master's in Statistics. This website is inspired by what I learnt during the latter. If you're interested in hiring me, you can find more details [here] (http://en.wikipedia.org/wiki/The_Princess_Bride_%28film%29)
+I grew up in the beautiful coastal city of Chennai, in India. I studied Mechanical Engineering for my undergraduate degree and followed that up with a Master's in Statistics at the University of Illinois at Urbana-Champaign. This website is inspired by what I thought about and learnt during my master's. If you want to discuss a post of mine or give feedback, you can drop a mail to gopalakrishnan.shanker@gmail.com. If you're interested in hiring me, you can find more details [here](https://github.com/krrishsgk/Resume-for-Blog/raw/master/SGK_Resume.pdf)
 
 
-https://github.com/krrishsgk/Resume-for-Blog/raw/master/SGK_Resume.pdf
