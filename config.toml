@@ -44,7 +44,6 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
   name = "Gopalakrishnan Shanker Rajhan"
   website = ""
   email = "gopalakrishnan.shanker@gmail.com"
-  facebook = "krish.sgk"
   github = "krrishsgk"
   twitter = "louisvangopal"
   linkedin = "gopalakrishnan-shanker"
@@ -52,37 +51,14 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 
 [[menu.main]]
-    name = "Blog"
+    name = "Posts"
     url = ""
     weight = 1
 
 [[menu.main]]
     name = "About"
     url = "page/about/"
-    weight = 3
-
-[[menu.main]]
-    identifier = "samples"
-    name = "Samples"
     weight = 2
-
-[[menu.main]]
-    parent = "samples"
-    name = "Big Image Sample"
-    url = "post/2017-03-07-bigimg-sample"
-    weight = 1
-
-[[menu.main]]
-    parent = "samples"
-    name = "Math Sample"
-    url = "post/2017-03-05-math-sample"
-    weight = 2
-
-[[menu.main]]
-    parent = "samples"
-    name = "Code Sample"
-    url = "post/2016-03-08-code-sample"
-    weight = 3
 
 [[menu.main]]
     name = "Tags"
