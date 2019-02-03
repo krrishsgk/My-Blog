@@ -2,7 +2,7 @@
 title: My First Website - and My First Post!
 author: Gopalakrishnan Shanker-Rajhan
 date: '2018-10-01'
-slug: hello-world
+slug: why-i-blog
 categories: []
 tags: []
 subtitle: 'Why am I starting this blog?'
