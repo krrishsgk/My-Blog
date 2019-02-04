@@ -10,7 +10,7 @@ subtitle: 'Why am I starting this blog?'
 description: 'A post and a blog that has been a long time coming'
 ---
 
-This has been something I have wanted to start for a while. Pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. A blog was supposed to be a public portfolio of my work, evidence of my capabilities for everyone to see. While that by itself was quite a nice reason to start a blog (I could network easier and maybe even gain employment), I was always putting it off until I saw another purpose put forward for having a blog - as a record of my personal progress and a collection of all the topics I delve into and try to understand. 
+This has been something I have wanted to start for a while. Pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. <!--more--> A blog was supposed to be a public portfolio of my work, evidence of my capabilities for everyone to see. While that by itself was quite a nice reason to start a blog (I could network easier and maybe even gain employment), I was always putting it off until I saw another purpose put forward for having a blog - as a record of my personal progress and a collection of all the topics I delve into and try to understand. 
 
 Seems like a trivial difference, but it seemed to matter to me. I don't have to always put up posts that are going to thrill readers or impress a potential employer. It feels free. 
 
