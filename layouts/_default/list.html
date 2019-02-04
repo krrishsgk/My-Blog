@@ -53,6 +53,13 @@
                   {{ end }}
                 {{ end }}
               </div>
+              
+              <p class="intro">
+                       {{ if .Description }}
+                          {{ .Description }}
+                       {{ else }}
+                          {{ .Summary | plainify | safeHTML }}
+                      {{ end }}</p>
     
               {{ if .Params.tags }}
                 <span class="post-meta">
