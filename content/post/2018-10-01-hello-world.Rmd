@@ -1,7 +1,7 @@
 ---
 title: My First Website - and My First Post!
 author: Gopalakrishnan Shanker-Rajhan
-date: '2018-10-01'
+date: '2019-02-01'
 slug: why-i-blog
 categories: []
 tags: []
@@ -10,9 +10,7 @@ subtitle: 'Why am I starting this blog?'
 description: 'A post and a blog that has been a long time coming'
 ---
 
-This has been something I have wanted to start for a while. Pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. <!--more--> A blog was supposed to be a public portfolio of my work, evidence of my capabilities for everyone to see. While that by itself was quite a nice reason to start a blog (I could network easier and maybe even gain employment), I was always putting it off until I saw another purpose put forward for having a blog - as a record of my personal progress and a collection of all the topics I delve into and try to understand. 
-
-Seems like a trivial difference, but it seemed to matter to me. I don't have to always put up posts that are going to thrill readers or impress a potential employer. It feels free. 
+This has been something I have wanted to start for a while. Pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. A blog can be a public portfolio of my work, evidence of my capabilities for everyone to see. Others have pointed out that it can also serve as a record of my personal progress and a collection of all the topics I delve into and try to understand, which is great. I don't have to always put up posts that are going to thrill readers or impress a potential employer. It feels free. 
 
 The topics I'm thinking I'll write about here look something like this:
 
@@ -20,7 +18,7 @@ The topics I'm thinking I'll write about here look something like this:
 - Data projects. There are so many aspects of working with data I'd like to cover here. 
 - Layman distillation of ML/DL research papers. I've had to do a couple of these in grad school and found it really useful. It will probably take the most time.
 
-I think it's insanely cool that you have found this post and are reading up to this point. I hope you stick around. I promise posts that are mostly interesting, sometimes even trivial, but always personal. 
+I think it's insanely cool that you have found this post and are reading up to this point. I hope you stick around. I promise posts that are mostly interesting, sometimes trivial, but always personal. 
 
 Thanks for reading!
 
