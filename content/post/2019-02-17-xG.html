@@ -1,0 +1,200 @@
+---
+title: Rite of Passage - Building an Expected Goals Model in R
+author: Gopalakrishnan Shanker-Rajhan
+date: '2019-04-17'
+slug: xG
+categories: []
+draft: FALSE
+tags:
+  - prediction
+  - modeling
+  - football
+  - eda
+  - soccer
+  - expectedgoals
+ 
+subtitle: 'How do you go about quantifying the value of a shot in football?'
+description: 'My first data project for the blog combines two topics very close to my heart, statistics and football. '
+---
+
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Sometimes, when I’m reading about an event that happened in the 2000s or reminiscing with friends about the past, one topic always stands out as something to be marveled at - the pace of technology. 12 years back, the first iPhone had just been released. It did not have an app store. Literally nobody had a ’smart’phone. Today, its presence is unavoidable in urban settings. I inevitably trip over how much the landscape of personal tech has changed since then. The release of the first iPhone is an arbitrary personal landmark and there might be other breakthroughs better suited to spearhead the comparison, but the point is, urban living has changed drastically.</p>
+<p>I think something similar can be said for football analytics as well. When I first started lurking in the Twitter football analytics community, data was scarce and Shots on Target totals were being explored for their predictive power. Paul Riley (I think) first talked about modeling shots using a <a href="https://differentgame.wordpress.com/2012/12/29/shot-position-average-model-spam/">‘SPAM’ model</a>, which later morphed into expected goals. It was a resourceful, dedicated and helpful community. Some analysts created data on their own, and others taught you how to get it off the web. The latter is how I get my first shots dataset complied, <a href="http://www.statsandsnakeoil.com/">Ben Torvaney</a> taught me how to convert BBC’s text commentary into shots data. The half a day I spent replicating his tutorial is still quite memorable. I’d never had access to football data with such detail. Two seasons worth of shots data from the English Premier League. It felt special. Now I could build my own SPAM model.</p>
+<p>Fast forward to today, and the scene is quite different. Expected goals has almost hit the mainstream. We have quite a few ways to model a game, not just through shots, but through passes, player position and movement. For someone looking to explore football analytics, the passage is a little less daunting. PSG <a href="https://www.agorize.com/en/challenges/xpsg">released</a> half a season’s worth of event data a while back, there are some very interesting datasets on Kaggle and, my personal favourite and what I’m using in this post, Statsbomb’s <a href="https://github.com/statsbomb/open-data">updated event level dataset</a>. They have incredible detail in their events (information about pressure the receiver was under, location of defenders and goalkeeper when a shot was taken).To top it, FCrSTATS has released a very helpful <a href="https://github.com/FCrSTATS/StatsBomb_WomensData">series of tutorials</a> on working with the data. It’s saved me a few days of my time.</p>
+<p>This is the first data project I’m recording on this blog, so I thought expected goals models would be a really poignant topic. I’m not exactly inventing the wheel, but personally, I am still breaking new ground. It’s accessibility has made it the topic of discussion quite a few times in the last two years. So that’s meant I’ve defended its usage a fair many times. Moreover, it allows me to combine two topics that are really close to my heart, statistics and football.</p>
+</div>
+<div id="what-is-expected-goals" class="section level1">
+<h1>What is expected goals?</h1>
+<p>Since my mom might be the only person who reads this, I’ll take a shot at giving a small reductive introduction to expected goals. Also referred to as <strong>xG</strong>.</p>
+<p>In football, a team gets a goal if they get the ball to go beyond the opponent’s goal line without breaking any of FIFA’s rules. Opponents feel bad if you score, so they try to stop you. They want to stop you, steal the ball from you and put it in your goal.Goals are what football is mostly about. Namely, score more than your opponent. To score, you have to take a <em>‘shot’</em>. So roughly speaking, if you take more shots, there’s a good chance you will score more goals. When a team goes through the hard work to create an opportunity for one of their players to take a shot at goal, they’re said to have created a <em>‘chance’</em>. Neat, right? So now you can say, if you create more chances, you’ll probably score more goals.</p>
+<p>Notice how I’m qualifying my confident statements with ‘there’s a good chance you will score more’ and ‘you’ll probably score more’. Well I’m doing that because more shots and more chances don’t always mean you score more. Their quality matters too. Taking a few high quality shots is better than taking a lot of low quality shots. And then there’s variance, i.e., luck. It’s not very rare for there to be widespread consensus after a game that one of the teams was ‘unlucky’. They played better. They had more chances, more shots. And/Or they created better chances. But they just couldn’t score more. Their striker had a bad game, the referee had a terrible game, the reasons can vary. But I hope I’ve established a very important point, football is all about goals, but goals don’t always tell the full story. Goals tell me who won a game, but there’s quite a bit that it misses. Indeed, when analysts tried using goals scored in the past to predict performance in the future, it didn’t work very well.</p>
+<p>So expected goals takes it a step back. Goals talk about the results of the shots taken in a game, expected goals talk you about the quality of the shots taken in a game<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. It assigns a value (xG) to each shot, which is the probability of that shot resulting in a goal. Since it is a probability, its value can range from 0 to 1. Higher the xG, higher the chance of a shot becoming a goal.</p>
+<p>For example, this tap in for Barcelona would have a very high xG</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/zRqwfjscelwlO/giphy.gif" width="400" />
+
+</div>
+<p>And this wonderful goal from Gerrard would have a pretty low xG</p>
+<div class="figure">
+<img src="https://media.giphy.com/media/Egh3HINlnpGBq/giphy.gif" width="400" />
+
+</div>
+<p>It’s pretty simple and straightforward.</p>
+</div>
+<div id="how-do-i-calculate-a-shots-xg" class="section level1">
+<h1>How do I calculate a shot’s xG?</h1>
+<p>This is the crux of this project. Build a model that can estimate the xG for a shot using Statbomb’s NWSL (National Women’s Soccer League) and WSL (England FA Women’s Super League) data. Usually, models account for the distance and angle of the shot from goal, the body part with which the shot was taken, the type of pass that set up the shot, and information about the context in which the shot was taken - such as whether it was from a free-kick, corner, counter-attack, patient possession, rebound or one on one.</p>
+<p>The functions Statsbomb have built make it incredibly easy to build an expected goals model with their data. They translate the coordinates of the shot into distance and angle of shot from the goal (and goalkeeper). They tell you if the shot was a first time shot, whether it followed a dribble, and if the shooter was under pressure when he took the shot and the position of the defenders at that point. But building a plug and play xG model wasn’t what I had in mind when I started this project, so I decided to re-invent a few parts of the wheel. Re-create quite a few of the variables they readily provide. This way, I get to be more familiar with working with event level data, which will be handy in future projects.</p>
+<div id="getting-a-look-at-the-data" class="section level2">
+<h2>Getting a look at the data</h2>
+<pre class="r"><code>Comp = FreeCompetitions()
+
+#Getting data only for the women&#39;s competitions
+Matches = FreeMatches(c(37, 49))
+
+error_game = nrow(Matches) - 39
+all_events = data.frame()
+for(i in 1:nrow(Matches)){
+  if(i %in% c(error_game)) next
+  temp = get.matchFree(Matches[i,])
+  print(i)
+  temp = allclean(temp)
+  all_events = bind_rows(all_events, temp)
+  rm(temp)
+}</code></pre>
+<p>There are 3613 shots across 135 matches in the data. Looking at where the shots came from -</p>
+<div class="figure"><span id="fig:unnamed-chunk-3"></span>
+<img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-3-1.png" alt="Darker regions imply more shots" width="672" />
+<p class="caption">
+Figure 1: Darker regions imply more shots
+</p>
+</div>
+<p>Central locations a few yards from goal seem like prime real estate for taking shots. Which is pretty intuitive. Being closer to goal when shooting makes it a lot easier to score. Lesser time for the goalkeeper to react, lesser defenders to block your attempt at goal. In fact, it’s easily the most important information that the model will need. Statsbomb provides me with the x and y coordinate of the pitch location from which the shot was taken. They also provide me with the coordinates of the goalkeeper at the time the shot was taken. So I thought I’ll create a few variables to represent this information.</p>
+<pre class="r"><code>shots_valid = shots_valid %&gt;% mutate(opposite = 120 - location.x,
+                                                adjacent = 40 - location.y,
+                                                hypotenuse = sqrt(opposite^2 + adjacent^2),
+                                                angle.to.goal = ifelse(location.y &gt; 40, 180 - asin(opposite/hypotenuse)*180/3.14, asin(opposite/hypotenuse)*180/3.14),
+                                                distance.to.goal = hypotenuse) %&gt;%
+                                                  select(-c(opposite, adjacent, hypotenuse))</code></pre>
+<p>I calculated the angle of a shot to goal as the angle between the goal line and the line joining the center of the goal to position of the shot<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. The distance to goal was merely the length of the latter line. (The statsbomb pitch is 120 units long and 80 units wide (their document states these can be thought of as yards - with link). The coordinate of the center of the goal is (120, 40)).</p>
+<p>For example, the angle to goal from a shot taken from (100,55) looks like this -</p>
+<div class="figure"><span id="fig:unnamed-chunk-6"></span>
+<img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-6-1.png" alt="A shot taken from (100, 55) is taken at an angle of 53.15 degrees to goal" width="672" />
+<p class="caption">
+Figure 2: A shot taken from (100, 55) is taken at an angle of 53.15 degrees to goal
+</p>
+</div>
+<p>I did something similar for distance and angle to goalkeeper, adding a few cavaets for the few situations in which the shooter was ahead of the goalkeeper.</p>
+<pre class="r"><code>#adding distance from goalkeeper and angle to gk
+shots_valid = shots_valid %&gt;% mutate(opposite = location.x.GK - location.x,
+                                                adjacent = location.y.GK - location.y,
+                                                hypotenuse = sqrt(opposite^2 + adjacent^2),
+                                                angle.to.gk = ifelse(location.y &gt; location.y.GK, 180 - asin(opposite/hypotenuse)*180/3.14, asin(opposite/hypotenuse)*180/3.14),
+                                                angle.to.gk = ifelse(location.x &gt; location.x.GK &amp; location.y &lt; location.y.GK, 270 - asin(opposite/hypotenuse)*180/3.14, angle.to.gk),
+                                                distance.to.gk = hypotenuse,
+                                                gk.to.goalline = sqrt((120 - location.x.GK)^2 + (40 - location.y.GK)^2)) %&gt;%
+                                                  select(-c(opposite, adjacent, hypotenuse))</code></pre>
+<p>At this point, I have all the information I need to build a basic xG model. I chose random forest as my model of choice because:</p>
+<ul>
+<li>They’re quite stable</li>
+<li>They don’t make any assumptions about the data</li>
+<li>They’re easy to build</li>
+<li>I wouldn’t rule out being biased towards them after reading a Statsbomb whitepaper which detailed the construction of their own xG model using Random Forests</li>
+</ul>
+<p>Statbomb’s data is quite clean and did not require much cleaning, but they have a few random shots missing information on goalkeeper position. I plotted the shots with missing data and looked for patterns through various ‘color’ variables, but no pattern leapt out. Since these were only 60 shots, I removed them from the data.</p>
+<div class="figure"><span id="fig:unnamed-chunk-9"></span>
+<img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-9-1.png" alt="Missing shots had no pattern I could discern" width="672" />
+<p class="caption">
+Figure 3: Missing shots had no pattern I could discern
+</p>
+</div>
+</div>
+<div id="building-the-model" class="section level2">
+<h2>Building the model</h2>
+<pre class="r"><code>#choosing independent variables
+ind.vars = c(&#39;id&#39;, &#39;is.goal&#39;,&#39;distance.to.gk&#39;, &#39;distance.to.goal&#39;, &#39;angle.to.gk&#39;, &#39;angle.to.goal&#39;, &#39;gk.to.goalline&#39;, &#39;play_pattern.name&#39;,&#39;shot.body_part.name&#39;, &#39;shot.type.name&#39;, &#39;shot.technique.name&#39;)
+
+shots.varsdata = subset(shots_valid, select = ind.vars) %&gt;% drop_na()
+
+#splitting into test train
+idx = createDataPartition(shots.varsdata$is.goal, p = 0.8, list = F)
+train = shots.varsdata[idx,]
+test = shots.varsdata[-idx,]</code></pre>
+<pre class="r"><code>vars = ncol(model.matrix(is.goal ~ ., train[,!colnames(train) %in% c(&quot;id&quot;)])) - 2
+grid = expand.grid(mtry = 4:vars)
+
+control = trainControl(classProbs = TRUE, method = &quot;cv&quot;, number = 5,
+                       allowParallel = T,summaryFunction = prSummary, savePredictions = T)
+
+rf.1 = caret::train(is.goal ~ .,
+                    data = train[,!colnames(train) %in% c(&quot;id&quot;)], 
+                    method = &quot;rf&quot;,
+                    metric = &quot;F&quot;,
+                    trControl = control,
+                    tuneGrid = grid,
+                    preProcess = c(&quot;center&quot;, &quot;scale&quot;))
+
+xG_test.rf.v1 = predict(rf.1, test, type = &quot;prob&quot;)</code></pre>
+<p>My first xG model was based completely on location information<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. Additional context was provided by body part the shot was taken with, state of play (open play, corner..) and shot technique (header, volley..). It had a AUC-PR of 0.25, AUC-ROC was 0.7 and an F-score of 0.18. I’m sure I can increase this by 5-7 points just by providing my model with more data.</p>
+<p>This model primarily used information about location of the shooter and the goalkeeper to estimate the chance of a shot becoming a goal. There are other indicators that can help build a better representation of a goal scoring situation. I built a couple of them to help this model.</p>
+</div>
+<div id="building-other-variables-to-capture-the-context-of-a-shot" class="section level2">
+<h2>Building other variables to capture the context of a shot</h2>
+<p>The first is looking at throughballs. Succesful throughballs usually find their target with space to run into, leaving the defenders scrambling. Other models I have read about have looked at whether a throughball was played in a 5 or 10 second window before a shot. I didn’t create a similar window as I was not confident of estimating it accurately with the data I’m using. So I created two variables, one to look at whether a throughball was played in an attack that lead to a shot, and another measuring the seconds between the throughball and the shot. As I add more data, the model should be able to figure out how long before a shot a throughball should be played for it to be meaningful.</p>
+<p>The second was successful dribbles. Players who have dribbled past a defender usually have more time to pick out a neat pass or shoot precisely. I added a couple of similar variables to capture this information.</p>
+<p>Both these ideas, along with several others, were explored in <a href="https://cartilagefreecaptain.sbnation.com/2015/10/19/9295905/premier-league-projections-and-new-expected-goals">this</a> xG model explanataion article, written way back in 2015 by Michael Caley.</p>
+<pre class="r"><code>#Flagging all possessions with a through ball and dribbles
+all_events = all_events %&gt;% group_by(match_id, possession) %&gt;%
+  mutate(tb.flag = any(pass.through_ball == T),
+         shot.flag = any(type.name == &#39;Shot&#39;),
+         dribble.flag = any(dribble.outcome.name == &#39;Complete&#39;),
+         tb.time = ifelse(shot.flag == T &amp; pass.through_ball == T, TimeInPoss, NA),
+         shot.time = ifelse(type.name == &#39;Shot&#39;, TimeInPoss, NA),
+         dribble.time = ifelse(shot.flag == T &amp; dribble.outcome.name == &#39;Complete&#39;, TimeInPoss, NA)) %&gt;%
+  fill(tb.time, shot.time, dribble.time) %&gt;%
+  mutate(dribble.to.shot.time = shot.time - dribble.time,
+         tb.to.shot.time = shot.time - tb.time)</code></pre>
+<p>Do these new variables work? Do they mean anything? It’s easy to perform a non-robust eye test -</p>
+<p><img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Throughball assisted shots have a significantly high conversion rate. Dribbles, not so much, but I’m positive these two variables should improve the model.</p>
+<p>One problem I encountered here was <code>NA</code> values in <code>tb.to.shot.time</code>, which measured the seconds between a throughball being played and a shot taken in the same possession sequence. Obviously, this value was <code>NA</code> whenever there was no throughball in a sequence with a shot. The <code>NA</code> value was completely valid in this context and provided information about the absence of a throughball. But since my model did not accept <code>NA</code> values in the data, I replaced them with an arbitrary high value (5000) to indicate the absence of a throughball. The model shouldn’t confuse this to be a valid value, as valid values for <code>tb.to.shot.time</code> maxes out at 44.96 seconds.</p>
+<p>Did including the new variables improve the performance of the model? Slightly. AUC-ROC was 0.72, AUC-PR was 0.26 and the F-score was 0.20. I expected a more stark improvement, but the handicap could be data more than anything else. There is some support for this, given that out of the 3300 shots taken, only 128 of them had a throughball in their buildup.</p>
+</div>
+</div>
+<div id="exploring-the-results" class="section level1">
+<h1>Exploring the results</h1>
+<p>To compare the model’s performance with one another, I’ll use <a href="https://www.dataschool.io/roc-curves-and-auc-explained/">ROC curves</a>. In short, the model whose line covers the most area in the ROC plot has the best performance. A perfect model will cover all the area (touch the top left corner, Area Under Curve = 1). I’ll also add Statbomb’s model to the mix.</p>
+<p><img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Providing the model with more context about the shot (V2), helped it outperform one without such information (V1). I included Statsbomb’s own model here for a comparison, and although it may not look it here, it completely smokes mine. Creating other context capturing variables to inch closer to their performance will a interesting future project.</p>
+<p>Despite its simplicity, my model held up quite well to matching goals scored over the long term. Which, like <a href="https://statsbomb.com/2018/05/the-dual-life-of-expected-goals-part-1/">this article says</a>, is the main goal of xG -</p>
+<blockquote>
+<p>“Notably what xG was not developed to do is accurately describe a single shot or a single game. Rather, it was designed to take lots of information, thousands and thousands of shots, synthesize it, and use that information to represent how many goals a team might reasonably be expected to score or concede given the types of shots they’ve taken and given up.”</p>
+</blockquote>
+<p>I measured xG’s ability to predict actual goals scored in one half, match, week, and month of football. On cue, their predictive ability increased as the time frame lengthened.</p>
+<p><img src="/post/2019-02-17-xG_files/figure-html/corr-plots-1.png" width="672" /><img src="/post/2019-02-17-xG_files/figure-html/corr-plots-2.png" width="672" /><img src="/post/2019-02-17-xG_files/figure-html/corr-plots-3.png" width="672" /><img src="/post/2019-02-17-xG_files/figure-html/corr-plots-4.png" width="672" /></p>
+<p>Looking at the shot map I created early in the article, and coloring the shots with their xG -</p>
+<p><img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>An easy eye-test plot to judge the performance of my model. Although it performs decently well on aggregated shot totals over a few months, I think it’s weakness in single shot xG really stands out here. There are quite a few shots from extreme angles and locations that it has assigned a high xG value to. I presume this is due to a lack of shots from these locations, with the existing ones presenting a picture of a high conversion area.</p>
+<p><img src="/post/2019-02-17-xG_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>Building the same map with Statsbomb’s xG shows how well calibrated their model is. There’s a gradual decrease in xG as we move away from goal. In comparison, there are quite a few zones in the box where my model is either very optimistic about a shot, or quite unbearably pessimistic.</p>
+<p>Improving my model’s estimation of single shot xG will be my next target. I’ll iterate over this model, add some variables to improve it (like game state). I’m thinking my other projects with this data will be:</p>
+<ul>
+<li><p>Quantify the value of the location each pass is played from (build an xPass model)</p></li>
+<li><p>Test the <a href="https://en.wikipedia.org/wiki/Hot_hand">‘hot hand’</a> hypothesis</p></li>
+</ul>
+<p>Thanks for reading!</p>
+</div>
+<div id="footnotes" class="section level1">
+<h1>Footnotes</h1>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This wasn’t the original point of expected goals. It was a replacement for shot totals and shot ratios in predicting the long term performance of a team. xG is pretty good at predicting how a team will do in the future, given long term data. Single match xG totals are more unstable and are rarely used as a lone stat to judge games.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>The angle I am finding is <span class="math inline">\(\theta\)</span>, and <span class="math inline">\(sin\theta = \frac{opposite}{hypotenuse}\)</span>. Opposite is given by the line from goalline to the location of shot (parallel to the touchline). Hypotenuse I get from the Pythagoras theorem (<span class="math inline">\(hypotenuse^2 = opposite^2 + adjacent^2\)</span>)<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>I used 5-fold cross validation, tuned for <code>mtry</code> (optimum number of trees at each split) and used F-scores to pick the best model. I preferred F-scores and AUC-PR values to evaluate my model over the more popular AUC-ROC values due to the imbalanced nature of soccer shots datasets. Goals are a rare event, and it is easier for the model to predict a negative (goal not scored) rather than a positive. In such cases, AUC-ROC <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4349800/">presents an optimistic picture</a> of a model’s performance as it accounts for true negatives, which are easier to get right than true positives. Since both precision and recall do not care for TN, they do not have this bias.<a href="#fnref3">↩</a></p></li>
+</ol>
+</div>

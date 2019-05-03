@@ -7,15 +7,42 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</managingEditor>
     <webMaster>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</webMaster>
-    <lastBuildDate>Fri, 15 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 17 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
+      <title>Eda</title>
+      <link>/tags/eda/</link>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
+      <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
+      <guid>/tags/eda/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Expectedgoals</title>
+      <link>/tags/expectedgoals/</link>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
+      <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
+      <guid>/tags/expectedgoals/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Football</title>
+      <link>/tags/football/</link>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
+      <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
+      <guid>/tags/football/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Modeling</title>
       <link>/tags/modeling/</link>
-      <pubDate>Fri, 15 Feb 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
       <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
       <guid>/tags/modeling/</guid>
       <description></description>
@@ -24,18 +51,18 @@
     <item>
       <title>Prediction</title>
       <link>/tags/prediction/</link>
-      <pubDate>Fri, 15 Feb 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
       <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
       <guid>/tags/prediction/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Psychology</title>
-      <link>/tags/psychology/</link>
-      <pubDate>Fri, 15 Feb 2019 00:00:00 +0000</pubDate>
+      <title>Soccer</title>
+      <link>/tags/soccer/</link>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
       <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
-      <guid>/tags/psychology/</guid>
+      <guid>/tags/soccer/</guid>
       <description></description>
     </item>
     

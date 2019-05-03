@@ -1,2 +1,2 @@
 ## Hello, and welcome!
-This site is still under construction. So if you have been invited to visit, you must be very special. The posts here right now are just a sign of what I want to build on. Stay tuned!
+Please feel free to read through the posts below and let me know if you have an idea for a project. Currently, I'm working on a R Shiny dashboard that will help you figure out the perfect balance between saving and paying off your loan, for the best long term financial gain. 

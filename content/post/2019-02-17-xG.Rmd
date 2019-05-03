@@ -1,0 +1,563 @@
+---
+title: Rite of Passage - Building an Expected Goals Model in R
+author: Gopalakrishnan Shanker-Rajhan
+date: '2019-04-17'
+slug: xG
+categories: []
+draft: FALSE
+tags:
+  - prediction
+  - modeling
+  - football
+  - eda
+  - soccer
+  - expectedgoals
+ 
+subtitle: 'How do you go about quantifying the value of a shot in football?'
+description: 'My first data project for the blog combines two topics very close to my heart, statistics and football. '
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_knit$set(eval.after = 'fig.cap')
+```
+
+```{r packages}
+library(StatsBombR)
+library(dplyr)
+library(data.table)
+library(scales)
+library(caret)
+library(RANN)
+library(plotROC)
+library(tidyr)
+library(reshape2)
+library(MLmetrics)
+library(lubridate)
+library(gridExtra)
+library(cowplot)
+library(ggthemes)
+source('pitch.R')
+```
+
+
+
+# Introduction
+
+Sometimes, when I'm reading about an event that happened in the 2000s or reminiscing with friends about the past, one topic always stands out as something to be marveled at - the pace of technology. 12 years back, the first iPhone had just been released. It did not have an app store. Literally nobody had a 'smart'phone. Today, its presence is unavoidable in urban settings. I inevitably trip over how much the landscape of personal tech has changed since then. The release of the first iPhone is an arbitrary personal landmark and there might be other breakthroughs better suited to spearhead the comparison, but the point is, urban living has changed drastically. 
+
+I think something similar can be said for football analytics as well. When I first started lurking in the Twitter football analytics community, data was scarce and Shots on Target totals were being explored for their predictive power. Paul Riley (I think) first talked about modeling shots using a ['SPAM' model](https://differentgame.wordpress.com/2012/12/29/shot-position-average-model-spam/), which later morphed into expected goals. It was a resourceful, dedicated and helpful community. Some analysts created data on their own, and others taught you how to get it off the web. The latter is how I get my first shots dataset complied, [Ben Torvaney](http://www.statsandsnakeoil.com/) taught me how to convert BBC's text commentary into shots data. The half a day I spent replicating his tutorial is still quite memorable. I'd never had access to football data with such detail. Two seasons worth of shots data from the English Premier League. It felt special. Now I could build my own SPAM model. 
+
+Fast forward to today, and the scene is quite different. Expected goals has almost hit the mainstream. We have quite a few ways to model a game, not just through shots, but through passes, player position and movement. For someone looking to explore football analytics, the passage is a little less daunting. PSG [released](https://www.agorize.com/en/challenges/xpsg) half a season's worth of event data a while back, there are some very interesting datasets on Kaggle and, my personal favourite and what I'm using in this post, Statsbomb's [updated event level dataset](https://github.com/statsbomb/open-data). They have incredible detail in their events (information about pressure the receiver was under, location of defenders and goalkeeper when a shot was taken).To top it, FCrSTATS has released a very helpful [series of tutorials](https://github.com/FCrSTATS/StatsBomb_WomensData) on working with the data. It's saved me a few days of my time. 
+
+This is the first data project I'm recording on this blog, so I thought expected goals models would be a really poignant topic. I'm not exactly inventing the wheel, but personally, I am still breaking new ground. It's accessibility has made it the topic of discussion quite a few times in the last two years. So that's meant I've defended its usage a fair many times. Moreover, it allows me to combine two topics that are really close to my heart, statistics and football. 
+
+# What is expected goals?
+
+Since my mom might be the only person who reads this, I'll take a shot at giving a small reductive introduction to expected goals. Also referred to as **xG**. 
+
+In football, a team gets a goal if they get the ball to go beyond the opponent's goal line without breaking any of FIFA's rules. Opponents feel bad if you score, so they try to stop you. They want to stop you, steal the ball from you and put it in your goal.Goals are what football is mostly about. Namely, score more than your opponent. To score, you have to take a *'shot'*. So roughly speaking, if you take more shots, there's a good chance you will score more goals. When a team goes through the hard work to create an opportunity for one of their players to take a shot at goal, they're said to have created a *'chance'*. Neat, right? So now you can say, if you create more chances, you'll probably score more goals. 
+
+Notice how I'm qualifying my confident statements with 'there's a good chance you will score more' and 'you'll probably score more'. Well I'm doing that because more shots and more chances don't always mean you score more. Their quality matters too. Taking a few high quality shots is better than taking a lot of low quality shots. And then there's variance, i.e., luck. It's not very rare for there to be widespread consensus after a game that one of the teams was 'unlucky'. They played better. They had more chances, more shots. And/Or they created better chances. But they just couldn't score more. Their striker had a bad game, the referee had a terrible game, the reasons can vary. But I hope I've established a very important point, football is all about goals, but goals don't always tell the full story. Goals tell me who won a game, but there's quite a bit that it misses. Indeed, when analysts tried using goals scored in the past to predict performance in the future, it didn't work very well.
+
+So expected goals takes it a step back. Goals talk about the results of the shots taken in a game, expected goals talk you about the quality of the shots taken in a game[^1]. It assigns a value (xG) to each shot, which is the probability of that shot resulting in a goal. Since it is a probability, its value can range from 0 to 1. Higher the xG, higher the chance of a shot becoming a goal. 
+
+For example, this tap in for Barcelona would have a very high xG
+
+![](https://media.giphy.com/media/zRqwfjscelwlO/giphy.gif){width=400px}
+
+And this wonderful goal from Gerrard would have a pretty low xG
+
+![](https://media.giphy.com/media/Egh3HINlnpGBq/giphy.gif){width=400px}
+
+It's pretty simple and straightforward. 
+
+# How do I calculate a shot's xG?
+
+This is the crux of this project. Build a model that can estimate the xG for a shot using Statbomb's NWSL (National Women's Soccer League) and WSL (England FA Women's Super League) data. Usually, models account for the distance and angle of the shot from goal, the body part with which the shot was taken, the type of pass that set up the shot, and information about the context in which the shot was taken - such as whether it was from a free-kick, corner, counter-attack, patient possession, rebound or one on one. 
+
+The functions Statsbomb have built make it incredibly easy to build an expected goals model with their data. They translate the coordinates of the shot into distance and angle of shot from the goal (and goalkeeper). They tell you if the shot was a first time shot, whether it followed a dribble, and if the shooter was under pressure when he took the shot and the position of the defenders at that point. But building a plug and play xG model wasn't what I had in mind when I started this project, so I decided to re-invent a few parts of the wheel. Re-create quite a few of the variables they readily provide. This way, I get to be more familiar with working with event level data, which will be handy in future projects. 
+
+## Getting a look at the data
+
+```{r data, echo = T, results = 'hide'}
+
+Comp = FreeCompetitions()
+
+#Getting data only for the women's competitions
+Matches = FreeMatches(c(37, 49))
+
+error_game = nrow(Matches) - 39
+all_events = data.frame()
+for(i in 1:nrow(Matches)){
+  if(i %in% c(error_game)) next
+  temp = get.matchFree(Matches[i,])
+  print(i)
+  temp = allclean(temp)
+  all_events = bind_rows(all_events, temp)
+  rm(temp)
+}
+
+```
+
+
+```{r}
+
+set.seed(42)
+#saving the data for later reloads
+#saveRDS(all_events, file="women_events.Rda")
+#all_events = readRDS(file = "women_events.Rda")
+
+```
+
+
+
+```{r events}
+
+#Flagging all possessions with a through ball and dribbles
+all_events = all_events %>% group_by(match_id, possession) %>%
+  mutate(tb.flag = any(pass.through_ball == T),
+         shot.flag = any(type.name == 'Shot'),
+         dribble.flag = any(dribble.outcome.name == 'Complete'),
+         tb.time = ifelse(shot.flag == T & pass.through_ball == T, TimeInPoss, NA),
+         shot.time = ifelse(type.name == 'Shot', TimeInPoss, NA),
+         dribble.time = ifelse(shot.flag == T & dribble.outcome.name == 'Complete', TimeInPoss, NA)) %>%
+  fill(tb.time, shot.time, dribble.time) %>%
+  mutate(dribble.to.shot.time = shot.time - dribble.time,
+         tb.to.shot.time = shot.time - tb.time)
+
+
+```
+
+```{r}
+
+#filtering for shots, for some EDA
+shots = filter(all_events, type.name == 'Shot')
+shots$is.goal = ifelse(shots$shot.outcome.name == 'Goal', "1","0")
+
+```
+
+There are `r I(nrow(shots))` shots across `r I(nrow(Matches))` matches in the data. Looking at where the shots came from -
+
+```{r, fig.cap = cap}
+
+
+p = create_StatsBomb_Pitch("#ffffff", "#A9A9A9", "#ffffff", "#000000", BasicFeatures=FALSE)
+
+p + geom_point(data = shots, aes(x = location.x, y = location.y), alpha = 0.2, size = 2,  shape = 16) + theme_void()
+cap = "Darker regions imply more shots"
+
+
+```
+
+Central locations a few yards from goal seem like prime real estate for taking shots. Which is pretty intuitive. Being closer to goal when shooting makes it a lot easier to score. Lesser time for the goalkeeper to react, lesser defenders to block your attempt at goal. In fact, it's easily the most important information that the model will need. Statsbomb provides me with the x and y coordinate of the pitch location from which the shot was taken. They also provide me with the coordinates of the goalkeeper at the time the shot was taken. So I thought I'll create a few variables to represent this information. 
+
+```{r}
+
+#cleaning the data to remove any column with only NAs
+not_all_na = function(x) any(!is.na(x))
+shots$is.goal = ifelse(shots$shot.outcome.name == 'Goal', "Goal","NoGoal")
+shots_valid = shots %>% select_if(not_all_na)
+
+```
+
+
+```{r, echo = TRUE}
+
+
+shots_valid = shots_valid %>% mutate(opposite = 120 - location.x,
+                                                adjacent = 40 - location.y,
+                                                hypotenuse = sqrt(opposite^2 + adjacent^2),
+                                                angle.to.goal = ifelse(location.y > 40, 180 - asin(opposite/hypotenuse)*180/3.14, asin(opposite/hypotenuse)*180/3.14),
+                                                distance.to.goal = hypotenuse) %>%
+                                                  select(-c(opposite, adjacent, hypotenuse))
+
+```
+
+I calculated the angle of a shot to goal as the angle between the goal line and the line joining the center of the goal to position of the shot[^2]. The distance to goal was merely the length of the latter line. (The statsbomb pitch is 120 units long and 80 units wide (their document states these can be thought of as yards - with link). The coordinate of the center of the goal is (120, 40)). 
+
+For example, the angle to goal from a shot taken from (100,55) looks like this - 
+
+```{r, fig.cap = cap}
+
+pt.df = data.frame(x1 = 100, x2 = 120, y1 = 55, y2 = 40, x3 = 116, y3 = 43, y4 = 45, y5= 49)
+
+p + geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), data = pt.df, size = 1) + 
+  geom_curve(aes(x = x3, y = y3, xend = x2, yend = y4), data = pt.df, size = 1, curvature = -.2) + annotate("text", x = 116, y = 48, label = "theta == 53.15", parse = T, size = 2.5) +
+  annotate("text", x = 98, y = 58, label = "(100, 55)", size = 2.5) + geom_point(aes(x = 100, y = 55), size = 3) + theme_void()
+cap = "A shot taken from (100, 55) is taken at an angle of 53.15 degrees to goal"
+```
+
+I did something similar for distance and angle to goalkeeper, adding a few cavaets for the few situations in which the shooter was ahead of the goalkeeper. 
+
+```{r, echo = TRUE}
+
+#adding distance from goalkeeper and angle to gk
+shots_valid = shots_valid %>% mutate(opposite = location.x.GK - location.x,
+                                                adjacent = location.y.GK - location.y,
+                                                hypotenuse = sqrt(opposite^2 + adjacent^2),
+                                                angle.to.gk = ifelse(location.y > location.y.GK, 180 - asin(opposite/hypotenuse)*180/3.14, asin(opposite/hypotenuse)*180/3.14),
+                                                angle.to.gk = ifelse(location.x > location.x.GK & location.y < location.y.GK, 270 - asin(opposite/hypotenuse)*180/3.14, angle.to.gk),
+                                                distance.to.gk = hypotenuse,
+                                                gk.to.goalline = sqrt((120 - location.x.GK)^2 + (40 - location.y.GK)^2)) %>%
+                                                  select(-c(opposite, adjacent, hypotenuse))
+
+
+```
+
+At this point, I have all the information I need to build a basic xG model. I chose random forest as my model of choice because:
+
+- They're quite stable
+- They don't make any assumptions about the data
+- They're easy to build
+- I wouldn't rule out being biased towards them after reading a Statsbomb whitepaper which detailed the construction of their own xG model using Random Forests
+
+
+```{r}
+#There are lots of columns with TRUE and NA. First replacing these NA with FALSE
+logical.vars = names(Filter(is.logical, shots_valid))
+df = shots_valid[logical.vars]
+df[is.na(df)] = FALSE
+shots_valid[logical.vars] = df
+
+```
+
+Statbomb's data is quite clean and did not require much cleaning, but they have a few random shots missing information on goalkeeper position. I plotted the shots with missing data and looked for patterns through various 'color' variables, but no pattern leapt out. Since these were only 60 shots, I removed them from the data. 
+
+```{r, fig.cap = cap}
+
+missing = shots_valid %>% filter(is.na(location.x.GK))
+
+p + geom_point(data = missing, aes(x = location.x, y = location.y, color = shot.outcome.name), size = 4, alpha = 1) + labs(title = "Shots with missing GK location", color = "Shot Outcome") + theme_void() + theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5, vjust=1,family="serif")) 
+
+cap = "Missing shots had no pattern I could discern"
+
+
+
+```
+
+## Building the model
+
+```{r, echo = TRUE}
+#choosing independent variables
+ind.vars = c('id', 'is.goal','distance.to.gk', 'distance.to.goal', 'angle.to.gk', 'angle.to.goal', 'gk.to.goalline', 'play_pattern.name','shot.body_part.name', 'shot.type.name', 'shot.technique.name')
+
+shots.varsdata = subset(shots_valid, select = ind.vars) %>% drop_na()
+
+#splitting into test train
+idx = createDataPartition(shots.varsdata$is.goal, p = 0.8, list = F)
+train = shots.varsdata[idx,]
+test = shots.varsdata[-idx,]
+
+```
+
+```{r}
+
+training_xg = shots.varsdata$shot.statsbomb_xg[idx]
+test_xg = subset(shots_valid, select = c(ind.vars, 'shot.statsbomb_xg')) %>% drop_na() %>% select(-ind.vars) %>% slice(-idx)
+
+```
+
+
+```{r}
+library(doParallel)
+cl = makePSOCKcluster(5)
+registerDoParallel(cl)
+
+```
+
+
+```{r m1, echo = TRUE}
+
+vars = ncol(model.matrix(is.goal ~ ., train[,!colnames(train) %in% c("id")])) - 2
+grid = expand.grid(mtry = 4:vars)
+
+control = trainControl(classProbs = TRUE, method = "cv", number = 5,
+                       allowParallel = T,summaryFunction = prSummary, savePredictions = T)
+
+rf.1 = caret::train(is.goal ~ .,
+                    data = train[,!colnames(train) %in% c("id")], 
+                    method = "rf",
+                    metric = "F",
+                    trControl = control,
+                    tuneGrid = grid,
+                    preProcess = c("center", "scale"))
+
+xG_test.rf.v1 = predict(rf.1, test, type = "prob")
+
+```
+
+My first xG model was based completely on location information[^3]. Additional context was provided by body part the shot was taken with, state of play (open play, corner..) and shot technique (header, volley..). It had a AUC-PR of 0.25, AUC-ROC was 0.7 and an F-score of 0.18. I'm sure I can increase this by 5-7 points just by providing my model with more data. 
+
+This model primarily used information about location of the shooter and the goalkeeper to estimate the chance of a shot becoming a goal. There are other indicators that can help build a better representation of a goal scoring situation. I built a couple of them to help this model. 
+
+## Building other variables to capture the context of a shot
+
+The first is looking at throughballs. Succesful throughballs usually find their target with space to run into, leaving the defenders scrambling. Other models I have read about have looked at whether a throughball was played in a 5 or 10 second window before a shot. I didn't create a similar window as I was not confident of estimating it accurately with the data I'm using. So I created two variables, one to look at whether a throughball was played in an attack that lead to a shot, and another measuring the seconds between the throughball and the shot. As I add more data, the model should be able to figure out how long before a shot a throughball should be played for it to be meaningful. 
+
+The second was successful dribbles. Players who have dribbled past a defender usually have more time to pick out a neat pass or shoot precisely. I added a couple of similar variables to capture this information. 
+
+Both these ideas, along with several others, were explored in [this](https://cartilagefreecaptain.sbnation.com/2015/10/19/9295905/premier-league-projections-and-new-expected-goals) xG model explanataion article, written way back in 2015 by Michael Caley. 
+
+```{r eval=FALSE, echo = TRUE}
+
+#Flagging all possessions with a through ball and dribbles
+all_events = all_events %>% group_by(match_id, possession) %>%
+  mutate(tb.flag = any(pass.through_ball == T),
+         shot.flag = any(type.name == 'Shot'),
+         dribble.flag = any(dribble.outcome.name == 'Complete'),
+         tb.time = ifelse(shot.flag == T & pass.through_ball == T, TimeInPoss, NA),
+         shot.time = ifelse(type.name == 'Shot', TimeInPoss, NA),
+         dribble.time = ifelse(shot.flag == T & dribble.outcome.name == 'Complete', TimeInPoss, NA)) %>%
+  fill(tb.time, shot.time, dribble.time) %>%
+  mutate(dribble.to.shot.time = shot.time - dribble.time,
+         tb.to.shot.time = shot.time - tb.time)
+
+
+```
+
+Do these new variables work? Do they mean anything? It's easy to perform a non-robust eye test - 
+
+```{r}
+
+#creating a summable goals column
+shots_valid$is.goal.num = ifelse(shots_valid$shot.outcome.name == 'Goal', 1, 0)
+
+limits = c(0,0.3)
+
+tb.test = shots_valid %>% group_by(tb.flag) %>%
+  summarise(total.shots = n(),
+            total.goals = sum(is.goal.num, na.rm = T),
+            conv = total.goals/total.shots)
+
+dribble.test = shots_valid %>% group_by(dribble.flag) %>%
+  summarise(total.shots = n(),
+            total.goals = sum(is.goal.num, na.rm = T),
+            conv = total.goals/total.shots)
+
+tb.plot = ggplot(data = tb.test, aes(x = tb.flag, y = conv)) + geom_bar(stat = 'identity', color = 'black', fill = '#DA291C') + scale_y_continuous(limits=limits) + labs(x = "Throughball Assisted Shot", y = "Conversion %") + theme_tufte() 
+
+db.plot = ggplot(data = dribble.test, aes(x = dribble.flag, y = conv)) + geom_bar(stat = 'identity', color = 'black', fill = '#ffc5ce') + scale_y_continuous(limits=limits) + theme_tufte() + theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + labs(x = "Dribble Assisted Shot") 
+
+comb = cowplot::plot_grid(tb.plot, db.plot)
+
+title = ggdraw() + draw_label("Conversion rate for Throughball and Dribble assisted shots", fontface='bold', fontfamily = "serif", size = 13)
+
+
+cowplot::plot_grid(title, comb, ncol = 1, rel_heights = c(0.1, 1))
+
+```
+
+Throughball assisted shots have a significantly high conversion rate. Dribbles, not so much, but I'm positive these two variables should improve the model. 
+
+```{r}
+
+flag_vars = c('dribble.flag', 'tb.flag', 'dribble.to.shot.time', 'tb.to.shot.time')
+
+shots_valid[flag_vars][is.na(shots_valid[flag_vars])] = 5000
+
+#choosing independent variables
+ind.vars = c('id', 'is.goal','distance.to.gk', 'distance.to.goal', 'angle.to.gk', 'angle.to.goal', 'gk.to.goalline', 'play_pattern.name','shot.body_part.name', 'shot.type.name', 'shot.technique.name', 'dribble.to.shot.time', 'tb.to.shot.time', 'TimeInPoss')
+
+shots.varsdata = subset(shots_valid, select = ind.vars) %>% drop_na()
+
+train = shots.varsdata[idx,]
+test = shots.varsdata[-idx,]
+
+```
+
+One problem I encountered here was `NA` values in `tb.to.shot.time`, which measured the seconds between a throughball being played and a shot taken in the same possession sequence. Obviously, this value was `NA` whenever there was no throughball in a sequence with a shot. The `NA` value was completely valid in this context and provided information about the absence of a throughball. But since my model did not accept `NA` values in the data, I replaced them with an arbitrary high value (5000) to indicate the absence of a throughball. The model shouldn't confuse this to be a valid value, as valid values for `tb.to.shot.time` maxes out at 44.96 seconds. 
+
+```{r m2}
+
+vars = ncol(model.matrix(is.goal ~ ., train[,!colnames(train) %in% c("id")])) - 2
+grid = expand.grid(mtry = c(4:vars))
+control = trainControl(classProbs = TRUE, method = "cv", number = 5,
+                       allowParallel = T,summaryFunction = prSummary, savePredictions = T)
+rf.2 = caret::train(is.goal ~ .,
+                    data = train[,!colnames(train) %in% c("id")], 
+                    method = "rf",
+                    metric = "F",
+                    trControl = control,
+                    tuneGrid = grid,
+                    preProcess = c("center", "scale"))
+                   # tuneLength = 20
+
+
+xG_test.rf.v2 = predict(rf.2, test, type = "prob")
+
+```
+
+Did including the new variables improve the performance of the model? Slightly. AUC-ROC was 0.72, AUC-PR was 0.26 and the F-score was 0.20. I expected a more stark improvement, but the handicap could be data more than anything else. There is some support for this, given that out of the 3300 shots taken, only 128 of them had a throughball in their buildup. 
+
+#Exploring the results
+
+To compare the model's performance with one another, I'll use [ROC curves](https://www.dataschool.io/roc-curves-and-auc-explained/). In short, the model whose line covers the most area in the ROC plot has the best performance. A perfect model will cover all the area (touch the top left corner, Area Under Curve = 1). I'll also add Statbomb's model to the mix. 
+
+```{r}
+#Building one ROC plot with data from all three
+
+#building a dataframe to make a plot
+roc.df = data.frame(is.goal = test$is.goal, rf.xg.v1 = xG_test.rf.v1$NoGoal, rf.xg.v2 = xG_test.rf.v2$NoGoal, sb.xg = 1 - test_xg)
+
+roc.df = melt_roc(roc.df, 'is.goal', c('rf.xg.v1', 'rf.xg.v2', 'shot.statsbomb_xg'), names = c('RF V1','RF V2', 'SB'))
+
+all.three_auc = ggplot(roc.df, aes(d = D, m = M, color = name)) + geom_roc(n.cuts = 0) + theme_tufte() + labs(x = "False Positive Rate", y = "True Positive Rate", color = "Model", title = "Comparing my models to SB's") + theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5,vjust=1,family="serif"))
+
+all.three_auc + annotate("text", x = 0.75, y = 0.35, label = paste("AUC(V1) = ", round(calc_auc(all.three_auc)$AUC[1], 2)), color = "#FF6600", family = "serif") + annotate("text", x = 0.75, y = 0.25, label = paste("AUC(V2) = ", round(calc_auc(all.three_auc)$AUC[2], 2)), color = "blue", family = "serif") + annotate("text", x = 0.75, y = 0.15, label = paste("AUC(SB) = ", round(calc_auc(all.three_auc)$AUC[3], 2)), color = "#333333", family = "serif") + scale_color_manual(values=c("#FF6600", "blue", "#333333")) 
+```
+
+Providing the model with more context about the shot (V2), helped it outperform one without such information (V1). I included Statsbomb's own model here for a comparison, and although it may not look it here, it completely smokes mine. Creating other context capturing variables to inch closer to their performance will a interesting future project. 
+
+```{r}
+#when stopping
+stopCluster(cl)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+
+
+
+top_10 = shots_valid %>% 
+  filter(competition_id == 37) %>%
+  group_by(player.name) %>% 
+  summarise(total.xG = sum(my.xG, na.rm = T),
+            total.goals = sum(is.goal.num, na.rm = T)) %>%
+  arrange(desc(total.xG)) %>%
+  top_n(10)
+
+player_xg = shots_valid %>% 
+  group_by(player.name) %>% 
+  summarise(total.xG = sum(my.xG, na.rm = T),
+            total.goals = sum(is.goal.num, na.rm = T)) %>%
+  arrange(desc(total.xG))
+
+ggplot(data = player_xg, aes(x = total.xG, y = total.goals)) + geom_point() + labs(title = "Goals vs Expected Goals") + geom_smooth(method = "lm")
+
+team_xg = shots_valid %>% 
+  group_by(team.name) %>% 
+  summarise(total.xG = sum(my.xG, na.rm = T),
+            total.goals = sum(is.goal.num, na.rm = T)) %>%
+  arrange(desc(total.xG))
+
+ggplot(data = team_xg, aes(x = total.xG, y = total.goals)) + geom_point() + labs(title = "Goals vs Expected Goals") + geom_smooth(method = "lm")
+
+```
+
+
+Despite its simplicity, my model held up quite well to matching goals scored over the long term. Which, like [this article says](https://statsbomb.com/2018/05/the-dual-life-of-expected-goals-part-1/), is the main goal of xG - 
+
+> "Notably what xG was not developed to do is accurately describe a single shot or a single game. Rather, it was designed to take lots of information, thousands and thousands of shots, synthesize it, and use that information to represent how many goals a team might reasonably be expected to score or concede given the types of shots they’ve taken and given up."
+
+I measured xG's ability to predict actual goals scored in one half, match, week, and month of football. On cue, their predictive ability increased as the time frame lengthened. 
+
+
+```{r corr-plots}
+#running the model on the full dataset
+
+lm_eqn = function(y, x){
+    m = lm(y ~ x);
+    eq = substitute(italic(r)^2~"="~r2, 
+         list(r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+shots.varsdata$my.xG = predict(rf.1, newdata = shots.varsdata, type = "prob")
+
+shots_valid = left_join(shots_valid, shots.varsdata[,c("id", "my.xG")], by = "id")
+shots_valid$my.xG = shots_valid$my.xG$Goal
+shots_valid = shots_valid %>% drop_na(my.xG)
+
+
+#half time correlation
+
+half.cor = shots_valid %>% filter(period == 1) %>%
+  group_by(match_id) %>%
+  summarise(goal.total = sum(is.goal.num, na.rm = T),
+            xG.total = sum(my.xG, na.rm = T))
+
+half.cor.sp = ggplot(half.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+#+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
+half.cor.sp + annotate("text", x = 3.5, y = 0.5, label = lm_eqn(half.cor$goal.total, half.cor$xG.total), parse = TRUE) + labs(title = "Goals vs xG at Half-Time", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe()+  theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5,vjust=1,family="serif"))
+
+#Full time correlation 
+full.cor = shots_valid %>% group_by(match_id) %>%
+  summarise(goal.total = sum(is.goal.num, na.rm = T),
+            xG.total = sum(my.xG, na.rm = T))
+
+full.cor.sp = ggplot(full.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+#+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
+full.cor.sp + annotate("text", x = 6.2, y = 1, label = lm_eqn(full.cor$goal.total, full.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG at Full-Time", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe() +theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5,vjust=1,family="serif"))
+
+#correlation by goals in a gameweek
+shots_valid = left_join(shots_valid, Matches[,c("match_id", "match_date")], by = "match_id")
+
+shots_valid$match_week = week(shots_valid$match_date)
+shots_valid$match_month = lubridate::month(shots_valid$match_date, label = T)
+
+#weekly correlation 
+week.cor = shots_valid %>% group_by(match_week) %>%
+  summarise(goal.total = sum(is.goal.num, na.rm = T),
+            xG.total = sum(my.xG, na.rm = T))
+
+week.cor.sp = ggplot(week.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+#+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
+
+week.cor.sp + annotate("text", x = 20, y = 5, label = lm_eqn(week.cor$goal.total, week.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG after a Week", x = "Goals", y = "xG") + geom_rangeframe()+ theme_tufte() +theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
+
+#month correlation 
+month.cor = shots_valid %>% group_by(match_month) %>%
+  summarise(goal.total = sum(is.goal.num, na.rm = T),
+            xG.total = sum(my.xG, na.rm = T))
+
+month.cor.sp = ggplot(month.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+
+month.cor.sp + annotate("text", x = 45, y = 15, label = lm_eqn(month.cor$goal.total, month.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG after a Month", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe() +theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
+
+
+```
+
+```{r}
+#saveRDS(shots_valid, file="women_shots.Rda")
+#shots_valid = readRDS(file = "women_shots.Rda")
+```
+
+Looking at the shot map I created early in the article, and coloring the shots with their xG - 
+
+```{r}
+pitch = create_StatsBomb_Pitch("#ffffff", "#A9A9A9", "#ffffff", "#000000", BasicFeatures=TRUE)
+
+a1 = p + geom_raster(data = shots_valid, aes(x = location.x, y = location.y, fill = my.xG)) + scale_fill_gradient(low = "blue", high = "red") + labs(fill = "xG", title = "Shots with my xG") + theme_void() + theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
+
+a2 = p + geom_raster(data = shots_valid, aes(x = location.x, y = location.y, fill = shot.statsbomb_xg)) + scale_fill_gradient(low = "blue", high = "red") + labs(fill = "xG", title = "Shots with Statsbomb xG") + theme_void() + theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
+
+a1
+```
+
+An easy eye-test plot to judge the performance of my model. Although it performs decently well on aggregated shot totals over a few months, I think it's weakness in single shot xG really stands out here. There are quite a few shots from extreme angles and locations that it has assigned a high xG value to. I presume this is due to a lack of shots from these locations, with the existing ones presenting a picture of a high conversion area. 
+
+```{r}
+a2
+```
+
+Building the same map with Statsbomb's xG shows how well calibrated their model is. There's a gradual decrease in xG as we move away from goal. In comparison, there are quite a few zones in the box where my model is either very optimistic about a shot, or quite unbearably pessimistic. 
+
+Improving my model's estimation of single shot xG will be my next target. I'll iterate over this model, add some variables to improve it (like game state). I'm thinking my other projects with this data will be:
+
+- Quantify the value of the location each pass is played from (build an xPass model)
+
+- Test the ['hot hand'](https://en.wikipedia.org/wiki/Hot_hand) hypothesis
+
+Thanks for reading!
+
+#Footnotes
+
+[^1]: This wasn't the original point of expected goals. It was a replacement for shot totals and shot ratios in predicting the long term performance of a team. xG is pretty good at predicting how a team will do in the future, given long term data. Single match xG totals are more unstable and are rarely used as a lone stat to judge games. 
+
+[^2]: The angle I am finding is $\theta$, and $sin\theta = \frac{opposite}{hypotenuse}$. Opposite is given by the line from goalline to the location of shot (parallel to the touchline). Hypotenuse I get from the Pythagoras theorem ($hypotenuse^2 = opposite^2 + adjacent^2$)
+
+[^3]: I used 5-fold cross validation, tuned for `mtry` (optimum number of trees at each split) and used F-scores to pick the best model. I preferred F-scores and AUC-PR values to evaluate my model over the more popular AUC-ROC values due to the imbalanced nature of soccer shots datasets. Goals are a rare event, and it is easier for the model to predict a negative (goal not scored) rather than a positive. In such cases, AUC-ROC [presents an optimistic picture](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4349800/) of a model's performance as it accounts for true negatives, which are easier to get right than true positives. Since both precision and recall do not care for TN, they do not have this bias.

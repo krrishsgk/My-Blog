@@ -7,19 +7,18 @@
     <generator>Hugo -- gohugo.io</generator>
     <managingEditor>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</managingEditor>
     <webMaster>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</webMaster>
-    <lastBuildDate>Fri, 15 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 17 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/modeling/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Understanding the relationship between drugs and psyche</title>
-      <link>/2019/02/15/drugs-and-psyche/</link>
-      <pubDate>Fri, 15 Feb 2019 00:00:00 +0000</pubDate>
+      <title>Rite of Passage - Building an Expected Goals Model in R</title>
+      <link>/2019/04/17/xg/</link>
+      <pubDate>Wed, 17 Apr 2019 00:00:00 +0000</pubDate>
       <author>gopalakrishnan.shanker@gmail.com (Gopalakrishnan Shanker Rajhan)</author>
-      <guid>/2019/02/15/drugs-and-psyche/</guid>
-      <description>This article is a slight edit from a group project paper I had done as a part of the coursework for STAT430 - Applied Machine Learning
-IntroductionThe problem of drug abuse is a pressing concern. It has numerous factors associated with it that include environmental, social, psychological and economic. There has been plenty of coverage towards the social and economic factors. Here, we consider the psychological. Namely, the relationship between personality traits and proclivity to gravitate towards certain types of drugs to evaluate the risk of an individual being a drug consumer.</description>
+      <guid>/2019/04/17/xg/</guid>
+      <description>IntroductionSometimes, when I’m reading about an event that happened in the 2000s or reminiscing with friends about the past, one topic always stands out as something to be marveled at - the pace of technology. 12 years back, the first iPhone had just been released. It did not have an app store. Literally nobody had a ’smart’phone. Today, its presence is unavoidable in urban settings. I inevitably trip over how much the landscape of personal tech has changed since then.</description>
     </item>
     
   </channel>
