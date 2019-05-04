@@ -552,7 +552,7 @@ Improving my model's estimation of single shot xG will be my next target. I'll i
 
 - Test the ['hot hand'](https://en.wikipedia.org/wiki/Hot_hand) hypothesis
 
-Thanks for reading!
+Thanks for reading! All code used in this article can be found [here](https://github.com/krrishsgk/Reference-Codes/blob/master/xG_Code.R)
 
 #Footnotes
 
