@@ -480,7 +480,7 @@ half.cor = shots_valid %>% filter(period == 1) %>%
   summarise(goal.total = sum(is.goal.num, na.rm = T),
             xG.total = sum(my.xG, na.rm = T))
 
-half.cor.sp = ggplot(half.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+half.cor.sp = ggplot(half.cor, aes(goal.total, xG.total)) + geom_point() + geom_smooth(method="lm", se = F)
 #+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
 half.cor.sp + annotate("text", x = 3.5, y = 0.5, label = lm_eqn(half.cor$goal.total, half.cor$xG.total), parse = TRUE) + labs(title = "Goals vs xG at Half-Time", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe()+  theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5,vjust=1,family="serif"))
 
@@ -489,7 +489,7 @@ full.cor = shots_valid %>% group_by(match_id) %>%
   summarise(goal.total = sum(is.goal.num, na.rm = T),
             xG.total = sum(my.xG, na.rm = T))
 
-full.cor.sp = ggplot(full.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+full.cor.sp = ggplot(full.cor, aes(goal.total,xG.total)) + geom_point() + geom_smooth(method="lm", se = F)
 #+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
 full.cor.sp + annotate("text", x = 6.2, y = 1, label = lm_eqn(full.cor$goal.total, full.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG at Full-Time", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe() +theme(plot.title = element_text(size=13,lineheight=.8, hjust = 0.5,vjust=1,family="serif"))
 
@@ -504,7 +504,7 @@ week.cor = shots_valid %>% group_by(match_week) %>%
   summarise(goal.total = sum(is.goal.num, na.rm = T),
             xG.total = sum(my.xG, na.rm = T))
 
-week.cor.sp = ggplot(week.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+week.cor.sp = ggplot(week.cor, aes(goal.total,xG.total)) + geom_point() + geom_smooth(method="lm", se = F)
 #+ labs(x = "foot length (cm)", y = "height (cm)") + geom_smooth(method="lm")
 
 week.cor.sp + annotate("text", x = 20, y = 5, label = lm_eqn(week.cor$goal.total, week.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG after a Week", x = "Goals", y = "xG") + geom_rangeframe()+ theme_tufte() +theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
@@ -514,7 +514,7 @@ month.cor = shots_valid %>% group_by(match_month) %>%
   summarise(goal.total = sum(is.goal.num, na.rm = T),
             xG.total = sum(my.xG, na.rm = T))
 
-month.cor.sp = ggplot(month.cor, aes(xG.total,goal.total)) + geom_point() + geom_smooth(method="lm", se = F)
+month.cor.sp = ggplot(month.cor, aes(goal.total, xG.total)) + geom_point() + geom_smooth(method="lm", se = F)
 
 month.cor.sp + annotate("text", x = 45, y = 15, label = lm_eqn(month.cor$goal.total, month.cor$xG.total), parse = TRUE) +  labs(title = "Goals vs xG after a Month", x = "Goals", y = "xG") + theme_tufte() + geom_rangeframe() +theme(plot.title = element_text(size=13,lineheight=.8, vjust=1,family="serif"))
 
