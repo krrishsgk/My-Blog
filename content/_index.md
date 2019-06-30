@@ -1,2 +1,2 @@
 ## Hello, and welcome!
-Please feel free to read through the posts below and let me know if you have an idea for a project. Currently, I'm working on a R Shiny dashboard that will help you figure out the perfect balance between saving and paying off your loan, for the best long term financial gain. 
+Please feel free to read through the posts below and let me know if you have an idea for a project. Currently, I'm going through some H1B related data released by USCIS to see if I can pick out a few interesting narratives.
