@@ -1,0 +1,14 @@
+---
+title: ML Explainability with xG
+author: Gopalakrishnan
+date: '2020-11-09'
+slug: ml-explainability-with-xg
+categories: []
+tags:
+  - expectedgoals
+  - football
+  - soccer
+  - modeling
+subtitle: ''
+---
+

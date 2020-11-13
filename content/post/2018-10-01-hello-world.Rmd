@@ -1,6 +1,6 @@
 ---
 title: My First Website - and My First Post!
-author: Gopalakrishnan Shanker-Rajhan
+author: Gopalakrishnan Shanker Rajhan
 date: '2019-02-01'
 slug: why-i-blog
 categories: []
@@ -10,13 +10,14 @@ subtitle: 'Why am I starting this blog?'
 description: 'A post and a blog that has been a long time coming'
 ---
 
-This has been something I have wanted to start for a while. Pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. A blog can be a public portfolio of my work, evidence of my capabilities for everyone to see. Others have pointed out that it can also serve as a record of my personal progress and a collection of all the topics I delve into and try to understand, which is great. I don't have to always put up posts that are going to thrill readers or impress a potential employer. It feels free. 
+This has been something I have wanted to start for a while, my own blog. I've had a couple of attempts at blogging before and enjoyed it for the most part. What's more, pretty much everyone whose career path I have looked to learn from has suggested starting a blog to display your skills, whether that be about football (of the soccer variety) analysis or any other data science work. A blog can be a public portfolio of my work, evidence of my capabilities for everyone to see. Others have pointed out that it can also serve as a record of my personal progress and a collection of all the topics I delve into and try to understand, which is great. I don't have to always put up posts that are going to thrill readers or impress a potential employer. It feels free. 
 
 The topics I'm thinking I'll write about here look something like this:
 
 - Explanation of Machine Learning terms/techniques
 - Data projects. There are so many aspects of working with data I'd like to cover here. 
 - Layman distillation of ML/DL research papers. I've had to do a couple of these in grad school and found it really useful. It will probably take the most time.
+- Very likely football. 
 
 I think it's insanely cool that you have found this post and are reading up to this point. I hope you stick around. I promise posts that are mostly interesting, sometimes trivial, but always personal. 
 

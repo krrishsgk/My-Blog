@@ -1,2 +1,2 @@
 ## Hello, and welcome!
-Please feel free to read through the posts below and let me know if you have an idea for a project. Currently, I'm going through some H1B related data released by USCIS to see if I can pick out a few interesting narratives.
+Please feel free to read through the posts below and let me know if you have an idea for a project. I've been reading a lot about machine learning explainability lately, so I'm working on putting that together into a post. 
